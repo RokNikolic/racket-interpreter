@@ -24,6 +24,9 @@
     (check-equal? (nth 50 fibs) 12586269025 "fib + nth")
     (check-equal? (nth 1000 fibs) 43466557686937456435688527675040625802564660517371780402481729089536555417949051890403879840079255169295922593080322634775209689623239873322471161642996440906533187938298969649928516003704476137795166849228875  "fib + nth")
 
+    (check-equal? (first 5 (squares fibs)) '(1 1 4 9 25) "squares")
+    (check-equal? (first 10 (squares naturals)) '(1 4 9 16 25 36 49 64 81 100) "squares")
+    (check-equal? (first 20 (squares twos)) '(4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4) "squares")
 ))
 
 (run-tests file-tests)
