@@ -27,6 +27,11 @@
     (check-equal? (first 5 (squares fibs)) '(1 1 4 9 25) "squares")
     (check-equal? (first 10 (squares naturals)) '(1 4 9 16 25 36 49 64 81 100) "squares")
     (check-equal? (first 20 (squares twos)) '(4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4) "squares")
+
+    (check-equal? (sml nil) '() "sml")
+    (check-equal? (sml null (sml nil)) #t "sml")
+    (check-equal? (sml hd (sml 5 :: null)) 5 "squares")
+    (check-equal? (sml tl (sml 5 :: (sml 4 :: (sml nil)))) '(4) "squares")
 ))
 
 (run-tests file-tests)

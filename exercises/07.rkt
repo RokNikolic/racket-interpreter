@@ -44,9 +44,9 @@
     [((cons h1 t1) (cons h2 t2))
         (cons h1 (thunk (cons h2 (thunk (zip (t1) (t2))))))])
 
-(define-syntax prvi 
+(define-syntax first_element 
   (syntax-rules ()
-    [(prvi list_in) (car list_in)]))
+    [(first_element list_in) (car list_in)]))
 
 (struct some (a) #:transparent)
 (struct none () #:transparent)
