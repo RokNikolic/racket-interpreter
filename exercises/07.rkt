@@ -12,9 +12,7 @@
 
 ; -------------------------------- 
 (define gen_naturals (lambda (x) (cons x (thunk (gen_naturals (+ x 1))))))
-(define naturals2 (gen_naturals 1))
-(define (generate_nat x) (cons x (thunk (generate_nat (+ x 1)))))
-(define naturals3 (generate_nat 1))
+(define naturals_different (gen_naturals 1))
 ; --------------------------------   
 
 (define fibs 
@@ -39,7 +37,46 @@
 (define (squares stream)
     (cons (expt (car stream) 2) (thunk (squares ((cdr stream))))))
 
-; -------------------------------- 
 (define (stream_pow n stream)
     (cons (expt (car stream) n) (thunk (stream_pow n ((cdr stream))))))
-; -------------------------------- 
+
+(define/match (zip s1 s2)
+    [((cons h1 t1) (cons h2 t2))
+        (cons h1 (thunk (cons h2 (thunk (zip (t1) (t2))))))])
+
+(define-syntax prvi 
+  (syntax-rules ()
+    [(prvi list_in) (car list_in)]))
+
+(struct some (a) #:transparent)
+(struct none () #:transparent)
+
+(define-syntax sml
+    (syntax-rules (valOf isSome SOME NONE nil null hd tl ::)
+        [(sml NONE) (none)]
+        [(sml SOME a) (some a)]
+        [(sml valOf a) (some-a a)]
+        [(sml isSome a) (some? a)]
+
+        [(sml nil) null]
+        [(sml null list_in) (null? list_in)]
+        [(sml hd list_in) (car list_in)]
+        [(sml tl list_in) (cdr list_in)]
+        [(sml element :: list_in) (append (list element) list_in)]))
+
+; this one is still not working
+(define (partitions k n)
+    (* k n))
+
+; function with any number of args
+(define (pair a b . ostali)
+    (if (null? ostali) 
+        (list (cons a b))
+        (cons (cons a b) (apply pair ostali))))
+
+; from list to stream
+(define (stream 1st)
+    (let loop ([xs 1st])
+        (match xs
+            ['() (loop 1st)]
+            [(cons h t) (cons h (thunk (loop t)))])))
