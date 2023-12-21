@@ -5,22 +5,19 @@
 (define ones (cons 1 (λ () ones)))
 (define twos (cons 2 (thunk twos)))
 
-; -------------------------------- 
 (define naturals 
     (letrec ([gen_nat (lambda (x) (cons x (thunk (gen_nat (+ x 1)))))])
         (gen_nat 1)))
 
-(define gen_naturals (lambda (x) (cons x (thunk (gen_naturals (+ x 1))))))
-(define naturals_different (gen_naturals 1))
-; -------------------------------- 
-; -------------------------------- 
+(define gen_nat_different (lambda (x) (cons x (thunk (gen_nat_different (+ x 1))))))
+(define naturals_different (gen_nat_different 1))
+ 
 (define fibs 
     (letrec ([gen_fib (lambda (f1 f2) (cons f1 (thunk (gen_fib f2 (+ f1 f2)))))])
     (gen_fib 1 1)))
 
 (define (gen_fib_different f1 f2) (cons f1 (thunk (gen_fib_different f2 (+ f1 f2)))))
 (define fibs_different (gen_fib_different 1 1))
-; -------------------------------- 
 
 (define (first n stream)
     (if (zero? n) 
@@ -60,16 +57,3 @@
 ; this one is still needs fixing
 (define (partitions k n)
     (* k n))
-
-; function with any number of args
-(define (pair a b . ostali)
-    (if (null? ostali) 
-        (list (cons a b))
-        (cons (cons a b) (apply pair ostali))))
-
-; from list to stream
-(define (stream 1st)
-    (let loop ([xs 1st])
-        (match xs
-            ['() (loop 1st)]
-            [(cons h t) (cons h (thunk (loop t)))])))

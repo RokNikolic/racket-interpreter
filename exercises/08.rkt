@@ -52,7 +52,7 @@
                     (if (<= (int-input val1) (int-input val2))
                         (true)
                         (false))]
-                [(or (true? val1) (false? val2))
+                [(and (true? val1) (false? val2))
                     (false)]
                 [(or (false? val1) (true? val2))
                     (true)]
