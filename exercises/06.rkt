@@ -30,7 +30,7 @@
 (define (remove x list_in)
     (cond 
         [(null? list_in) null]
-        [(eq? x (car list_in)) (append null (remove x (cdr list_in)))]
+        [(equal? x (car list_in)) (append null (remove x (cdr list_in)))]
         [#t (append (list (car list_in)) (remove x (cdr list_in)))]))
 
 (define (map f list_in)

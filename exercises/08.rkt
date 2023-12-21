@@ -2,45 +2,63 @@
 
 (provide (all-defined-out))
 
-(struct int (num) #:transparent)
+(struct int (input) #:transparent)
 (struct true () #:transparent)
 (struct false () #:transparent)
 (struct add (val1 val2) #:transparent)
 (struct mul (val1 val2) #:transparent)
+(struct ~ (input) #:transparent)
+(struct ?int (input) #:transparent)
 
-(define (fri val)
+(define (fri expression)
     (cond
-        [(int? val) val]
-        [(true? val) (true)]
-        [(false? val) (false)]
-        [(add? val) 
+        [(int? expression) expression]
+        [(true? expression) (true)]
+        [(false? expression) (false)]
+        [(add? expression) 
             (let (
-                [val1 (fri (add-val1 val))]
-                [val2 (fri (add-val2 val))])
+                [val1 (fri (add-val1 expression))]
+                [val2 (fri (add-val2 expression))])
             (cond
                 [(and (int? val1) (int? val2))
-                    (int (+ (int-num val1) (int-num val2)))]
+                    (int (+ (int-input val1) (int-input val2)))]
                 [(or (true? val1) (true? val2))
                     (true)]
                 [(and (false? val1) (false? val2))
                     (false)]
                 [#t (error "Value not an int or bool!")])
-            )]
-        [(mul? val) 
+        )]
+        [(mul? expression) 
             (let (
-                [val1 (fri (mul-val1 val))]
-                [val2 (fri (mul-val2 val))])
+                [val1 (fri (mul-val1 expression))]
+                [val2 (fri (mul-val2 expression))])
             (cond
                 [(and (int? val1) (int? val2))
-                    (int (* (int-num val1) (int-num val2)))]
+                    (int (* (int-input val1) (int-input val2)))]
                 [(and (true? val1) (true? val2))
                     (true)]
                 [(or (false? val1) (false? val2))
                     (false)]
                 [#t (error "Value not an int or bool!")])
-            )]
+        )]
+        [(~? expression) 
+            (let ([val_input (fri (~-input expression))])
+            (cond 
+                [(int? val_input) (int (- (int-input val_input)))]
+                [(true? val_input) (false)]
+                [(false? val_input) (true)]
+                [#t (error "Cant negate this type of thing")])
+        )]
+        [(?int? expression) 
+            (let ([expression_input (fri (?int-input expression))])
+            (if (int? expression_input)
+                (true)
+                (false))
+        )]
     ))
 
+
+(fri (?int (false)))
 
 (struct konst (int) #:transparent)     ; konstanta; argument je število
 (struct bool (b) #:transparent)        ; b ima lahko vrednost true or false

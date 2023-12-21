@@ -3,23 +3,21 @@
 (provide (all-defined-out))
 
 (define ones (cons 1 (λ () ones)))
-
 (define twos (cons 2 (thunk twos)))
 
+; -------------------------------- 
 (define naturals 
     (letrec ([gen_nat (lambda (x) (cons x (thunk (gen_nat (+ x 1)))))])
         (gen_nat 1)))
 
-; -------------------------------- 
 (define gen_naturals (lambda (x) (cons x (thunk (gen_naturals (+ x 1))))))
 (define naturals_different (gen_naturals 1))
-; --------------------------------   
-
+; -------------------------------- 
+; -------------------------------- 
 (define fibs 
     (letrec ([gen_fib (lambda (f1 f2) (cons f1 (thunk (gen_fib f2 (+ f1 f2)))))])
     (gen_fib 1 1)))
 
-; -------------------------------- 
 (define (gen_fib_different f1 f2) (cons f1 (thunk (gen_fib_different f2 (+ f1 f2)))))
 (define fibs_different (gen_fib_different 1 1))
 ; -------------------------------- 
@@ -44,13 +42,8 @@
     [((cons h1 t1) (cons h2 t2))
         (cons h1 (thunk (cons h2 (thunk (zip (t1) (t2))))))])
 
-(define-syntax first_element 
-  (syntax-rules ()
-    [(first_element list_in) (car list_in)]))
-
 (struct some (a) #:transparent)
 (struct none () #:transparent)
-
 (define-syntax sml
     (syntax-rules (valOf isSome SOME NONE nil null hd tl ::)
         [(sml NONE) (none)]
@@ -64,7 +57,7 @@
         [(sml tl list_in) (cdr list_in)]
         [(sml element :: list_in) (append (list element) list_in)]))
 
-; this one is still not working
+; this one is still needs fixing
 (define (partitions k n)
     (* k n))
 
