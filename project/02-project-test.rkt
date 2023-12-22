@@ -16,6 +16,9 @@
     (check-equal? (fri (add (int -3) (int 8)) null) (int 5) "add")
     (check-equal? (fri (add (int 0) (int 0)) null) (int 0) "add")
     (check-equal? (fri (add (false) (false)) null) (false) "add")
+    (check-equal? (add (mul (true) (true)) (false)) (add (mul (true) (true)) (false)))
+    (check-equal? (fri (add (mul (true) (true)) (false)) null) (true))
+    (check-equal? (fri (add (add (int 9) (int 9)) (true)) null) (triggered (exception "add: wrong argument type")))
 
     (check-equal? (fri (mul (int 3) (int 2)) null) (int 6) "mul")
     (check-equal? (fri (mul (false) (true)) null) (false) "mul")
