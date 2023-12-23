@@ -1,7 +1,15 @@
 #lang racket
 
-(provide (all-defined-out))
+(provide false true int .. empty exception
+         trigger triggered handle
+         if-then-else
+         ?int ?bool ?.. ?seq ?empty ?exception
+         add mul ?leq ?= head tail ~ ?all ?any
+         vars valof fun proc closure call
+         greater rev binary filtering folding mapping
+         fri)
 
+; Data types
 (struct true () #:transparent)
 (struct false () #:transparent)
 (struct int (n) #:transparent)
@@ -9,6 +17,7 @@
 (struct empty () #:transparent)
 (struct exception (exn) #:transparent)
 
+; Flow Control
 (struct trigger (e) #:transparent)
 (struct triggered (e) #:transparent)
 (struct handle (e1 e2 e3) #:transparent)
@@ -24,17 +33,28 @@
 (struct ?leq (e1 e2) #:transparent)
 (struct ?= (e1 e2) #:transparent)
 (struct head (e) #:transparent)
+(struct tail (e) #:transparent)
 (struct ~ (e) #:transparent)
 (struct ?all (e) #:transparent)
 (struct ?any (e) #:transparent)
+
+; Variables
+(struct vars (s e1 e2) #:transparent)
+(struct valof (s) #:transparent)
+
+; Functions
+(struct fun (name farg body) #:transparent)
+(struct proc (name body) #:transparent)
+(struct closure (env f) #:transparent)
+(struct call (e args) #:transparent)
 
 (define (fri expression environment)
     (cond
         ; Data types
         [(int? expression) expression]
-        [(true? expression) (true)]
-        [(false? expression) (false)]
-        [(empty? expression) (empty)]
+        [(true? expression) expression]
+        [(false? expression) expression]
+        [(empty? expression) expression]
         [(exception? expression) 
             (if (string? (exception-exn expression))
                 expression
@@ -44,19 +64,33 @@
             (let (
                 [input1 (fri (..-e1 expression) environment)]
                 [input2 (fri (..-e2 expression) environment)])
-            (.. input1 input2)
+            (cond
+                [(triggered? input1) input1]
+                [(triggered? input2) input2]
+                [#t (.. input1 input2)])
         )]
 
         ; Flow Control
         [(trigger? expression) 
-            (let (
-                [eval_expression (fri (trigger-e expression) environment)])
-            (if (exception? eval_expression) 
-                (triggered eval_expression)
-                (triggered (exception "trigger: wrong argument type")))
+            (let ([expression_input (fri (trigger-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(exception? expression_input) (triggered expression_input)]
+                [#t (triggered (exception "trigger: wrong argument type"))])
         )]
-        [(handle? expression) expression] ;TODO
-
+        [(handle? expression) 
+            (let (
+                [input1 (fri (handle-e1 expression) environment)]
+                [input2 (fri (handle-e2 expression) environment)]
+                [input3 (fri (handle-e3 expression) environment)])
+            (if (triggered? input1) 
+                input1
+                (if (not (exception? input1))
+                    (triggered (exception "handle: wrong argument type"))
+                    (if (and (triggered? input2) (equal? input1 (triggered-e input2)))
+                        input3
+                        input2)))
+        )]
         [(if-then-else? expression) 
             (let ([condition_input (fri (if-then-else-condition expression) environment)])
             (cond 
@@ -76,12 +110,26 @@
                     (int (+ (int-n val1) (int-n val2)))]
                 [(or (int? val1) (int? val2))
                     (triggered (exception "add: wrong argument type"))]
+                [(empty? val1) val2]
+                [(empty? val2) val1]
+                [(and (..? val1) (..? val2))
+                    (let (
+                        [head_of_1 (..-e1 val1)]
+                        [tail_of_1 (..-e2 val1)])
+                    (cond
+                        [(empty? tail_of_1) (.. head_of_1 val2)]
+                        [(..? tail_of_1) (.. head_of_1 (fri (add tail_of_1 val2) environment))]
+                        [#t (triggered (exception "add: wrong argument type"))]
+                    )
+                )]
+                [(or (..? val1) (..? val2))
+                    (triggered (exception "add: wrong argument type"))]
                 [(or (true? val1) (true? val2))
                     (true)]
                 [(and (false? val1) (false? val2))
                     (false)]
-                [#t (triggered (exception "add: wrong argument type"))])
-        )]
+                [#t (triggered (exception "add: wrong argument type"))]))
+        ]
         [(mul? expression) 
             (let (
                 [val1 (fri (mul-e1 expression) environment)]
@@ -101,20 +149,50 @@
         )]
         [(?int? expression) 
             (let ([expression_input (fri (?int-e expression) environment)])
-            (if (int? expression_input)
-                (true)
-                (false))
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(int? expression_input) (true)]
+                [#t (false)])
         )]
-        [(?bool? expression) expression] ;TODO
-
-        [(?..? expression) expression] ;TODO
-
-        [(?seq? expression) expression] ;TODO
-
-        [(?empty? expression) expression] ;TODO
-
-        [(?exception? expression) expression] ;TODO
-
+        [(?bool? expression) 
+            (let ([expression_input (fri (?bool-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(or (true? expression_input) (false? expression_input)) (true)]
+                [#t (false)])
+        )]
+        [(?..? expression) 
+            (let ([expression_input (fri (?..-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(..? expression_input) (true)]
+                [#t (false)])
+        )]
+        [(?seq? expression) 
+            (let ([expression_input (fri (?seq-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(empty? expression_input) (true)]
+                [(not (..? expression_input)) (false)]
+                [(if (empty? (..-e2 expression_input)) 
+                    (true)
+                    (fri (?seq (..-e2 expression_input)) environment))]
+                [#t (false)])
+        )]
+        [(?empty? expression) 
+            (let ([expression_input (fri (?empty-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(empty? expression_input) (true)]
+                [#t (false)])
+        )]
+        [(?exception? expression) 
+            (let ([expression_input (fri (trigger-e expression) environment)])
+            (cond
+                [(triggered? expression_input) expression_input]
+                [(exception? expression_input) (true)]
+                [#t (false)])
+        )]
         [(?leq? expression) 
             (let (
                 [val1 (fri (?leq-e1 expression) environment)]
@@ -134,10 +212,34 @@
                     (true)]
                 [#t (triggered (exception "?leq: wrong argument type"))])
         )]
-        [(?=? expression) expression] ;TODO
-
-        [(head? expression) expression] ;TODO
-
+        [(?=? expression) 
+            (let (
+                [expression1 (fri (?leq-e1 expression) environment)]
+                [expression2 (fri (?leq-e2 expression) environment)])
+            (cond
+                [(triggered? expression1) expression1]
+                [(triggered? expression2) expression2]
+                [(equal? expression1 expression2) (true)]
+                [#t (false)])
+        )]
+        [(head? expression) 
+            (let ([eval_list (fri (head-e expression) environment)])
+            (cond
+                [(triggered? eval_list) eval_list]
+                [(empty? eval_list)
+                    (triggered (exception "head: empty sequence"))]
+                [(..? eval_list) (..-e1 eval_list)]
+                [#t (triggered (exception "head: wrong argument type"))])
+        )]
+        [(tail? expression) 
+            (let ([eval_list (fri (tail-e expression) environment)])
+            (cond
+                [(triggered? eval_list) eval_list]
+                [(empty? eval_list)
+                    (triggered (exception "tail: empty sequence"))]
+                [(..? eval_list) (..-e2 eval_list)]
+                [#t (triggered (exception "tail: wrong argument type"))])
+        )]
         [(~? expression) 
             (let ([val_input (fri (~-e expression) environment)])
             (cond 
@@ -152,7 +254,37 @@
         [(?any? expression) expression] ;TODO
 
         ; Variables
+        [(vars? expression) expression] ;TODO
+
+        [(valof? expression) expression] ;TODO
+
+        ; Functions
+        [(fun? expression) expression] ;TODO
+
+        [(proc? expression) expression] ;TODO
+
+        [(closure? expression) expression] ;TODO
+
+        [(call? expression) expression] ;TODO
+
         [#t (triggered (exception "fri: wrong syntax."))]
     ))
 
-(fri (add (add (int 9) (int 9)) (true)) null)
+(define (greater e1 e2)
+    (fri (int 1) null))
+
+(define (rev e)
+    (fri (int 1) null))
+
+(define (binary e)
+    (fri (int 1) null))
+
+(define (mapping f seq)
+    (fri (int 1) null))
+
+(define (filtering f seq)
+    (fri (int 1) null))
+
+(define (folding f init seq)
+    (fri (int 1) null))
+
