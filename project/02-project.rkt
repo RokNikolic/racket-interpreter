@@ -302,10 +302,10 @@
                 [expression_input (vars-e2 expression)])
             (cond
                 [(and (list? names) (list? values)) 
-                    (let ([mapped_values (map (λ (v) (fri v environment)) values)])
-                    (if (triggered? mapped_values) 
-                        mapped_values
-                        (fri expression_input (append (map (λ (n v) (cons n v)) names mapped_values) environment))))]
+                    (let ([fried_values (map (λ (v) (fri v environment)) values)])
+                    (if (triggered? fried_values) 
+                        fried_values
+                        (fri expression_input (append (map (λ (n v) (cons n v)) names fried_values) environment))))]
                 [#t (if (equal? #f (assoc names environment))
                         (let ([evaluated_value (fri values environment)]) 
                         (if (triggered? evaluated_value)
@@ -328,10 +328,26 @@
         [(call? expression) 
             (letrec (
                 [e (fri (call-e expression) environment)]
-                [args (call-args expression)])
+                [args (call-args expression)]
+                [fried_args (map (λ (v) (fri v environment)) args)])
             (cond
-                [(proc? e) (display "proc")]
-                [(closure? e) (display "closure")]
+                [(proc? e)
+                    (let (
+                        [name (proc-name e)]
+                        [body (proc-body e)])
+                    (fri body (append (list (cons name null)) environment))
+                )]
+                [(closure? e) 
+                    (letrec (
+                        [env (closure-env e)]
+                        [f (closure-f e)]
+                        [name (fun-name f)]
+                        [farg (fun-farg f)]
+                        [body (fun-body f)])
+                    (if (equal? (length fried_args) (length farg))
+                        (fri body (append (map (λ (n v) (cons n v)) farg fried_args) (list (cons name f)) env))
+                        (triggered (exception "call: arity mismatch")))
+                )]
                 [#t (triggered (exception "call: wrong argument type"))])
         )]
 
@@ -339,7 +355,7 @@
         [#t (triggered (exception "fri: wrong syntax"))]
     ))
 
-(fri (call (proc "test" (valof "test")) (list (int 1))) null)
+
 
 
 
