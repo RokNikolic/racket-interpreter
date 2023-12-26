@@ -167,8 +167,7 @@
                         [(empty? tail_of_1) (.. head_of_1 val2)]
                         [(..? tail_of_1) (.. head_of_1 (fri (add tail_of_1 val2) environment))]
                         [#t (triggered (exception "add: wrong argument type"))]
-                    )
-                )]
+                    ))]
                 [(or (..? val1) (..? val2))
                     (triggered (exception "add: wrong argument type"))]
                 [(or (true? val1) (true? val2))
@@ -213,8 +212,7 @@
                     (let (
                         [tail_of_1 (..-e2 val1)]
                         [tail_of_2 (..-e2 val2)])
-                    (fri (?leq tail_of_1 tail_of_2) environment)
-                )]
+                    (fri (?leq tail_of_1 tail_of_2) environment))]
                 [(or (..? val1) (..? val2))
                     (triggered (exception "add: wrong argument type"))]
                 [(and (true? val1) (false? val2))
@@ -275,7 +273,7 @@
                     (if (false? head_of_1)
                         (false)
                         (fri (?all tail_of_1) environment))
-                )]
+                    )]
                 [#t (triggered (exception "?all: wrong argument type"))])
         )]
         [(?any? expression) 
@@ -292,27 +290,59 @@
                         [tail_of_1 (..-e2 expression_input)])
                     (if (true? head_of_1)
                         (true)
-                        (fri (?all tail_of_1) environment))
-                )]
+                        (fri (?all tail_of_1) environment)))]
                 [#t (triggered (exception "?any: wrong argument type"))])
         )]
 
         ; Variables
-        [(vars? expression) expression] ;TODO
-
-        [(valof? expression) expression] ;TODO
+        [(vars? expression) 
+            (let (
+                [names (vars-s expression)]
+                [values (vars-e1 expression)]
+                [expression_input (vars-e2 expression)])
+            (cond
+                [(and (list? names) (list? values)) 
+                    (let ([mapped_values (map (λ (v) (fri v environment)) values)])
+                    (if (triggered? mapped_values) 
+                        mapped_values
+                        (fri expression_input (append (map (λ (n v) (cons n v)) names mapped_values) environment))))]
+                [#t (if (equal? #f (assoc names environment))
+                        (let ([evaluated_value (fri values environment)]) 
+                        (if (triggered? evaluated_value)
+                            evaluated_value
+                            (fri expression_input (append (list (cons names evaluated_value))))))
+                    (triggered (exception "vars: duplicate identifier")))])
+        )]
+        [(valof? expression) 
+            (letrec (
+                [name (valof-s expression)]
+                [found (assoc name environment)])
+            (cond
+                [(not (equal? #f found)) (cdr found)]
+                [#t (triggered (exception "valof: undefined variable"))])
+        )]
 
         ; Functions
-        [(fun? expression) expression] ;TODO
+        [(fun? expression) (closure environment expression)]
+        [(proc? expression) expression]
+        [(call? expression) 
+            (letrec (
+                [e (fri (call-e expression) environment)]
+                [args (call-args expression)])
+            (cond
+                [(proc? e) (display "proc")]
+                [(closure? e) (display "closure")]
+                [#t (triggered (exception "call: wrong argument type"))])
+        )]
 
-        [(proc? expression) expression] ;TODO
-
-        [(closure? expression) expression] ;TODO
-
-        [(call? expression) expression] ;TODO
-
-        [#t (triggered (exception "fri: wrong syntax."))]
+        ; Default case
+        [#t (triggered (exception "fri: wrong syntax"))]
     ))
+
+(fri (call (proc "test" (valof "test")) (list (int 1))) null)
+
+
+
 
 ; Macros
 (define (greater e1 e2)
@@ -332,4 +362,3 @@
 
 (define (folding f init seq)
     (fri (int 1) null))
-
