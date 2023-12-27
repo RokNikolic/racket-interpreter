@@ -331,6 +331,7 @@
                 [args (call-args expression)]
                 [fried_args (map (λ (v) (fri v environment)) args)])
             (cond
+                [(triggered? e) e]
                 [(proc? e)
                     (let (
                         [name (proc-name e)]
@@ -345,7 +346,7 @@
                         [farg (fun-farg f)]
                         [body (fun-body f)])
                     (if (equal? (length fried_args) (length farg))
-                        (fri body (append (map (λ (n v) (cons n v)) farg fried_args) (list (cons name f)) env))
+                        (fri body (append (map (λ (n v) (cons n v)) farg fried_args) (list (cons name e)) env))
                         (triggered (exception "call: arity mismatch")))
                 )]
                 [#t (triggered (exception "call: wrong argument type"))])
@@ -355,14 +356,14 @@
         [#t (triggered (exception "fri: wrong syntax"))]
     ))
 
-
-
-
-
-
 ; Macros
 (define (greater e1 e2)
-    (fri (int 1) null))
+    (let (
+        [ee1 (fri e1 null)]
+        [ee2 (fri e2 null)])
+    (if (equal? ee1 ee2)
+        (false)
+        (?leq ee2 ee1))))
 
 (define (rev e)
     (fri (int 1) null))
@@ -378,3 +379,5 @@
 
 (define (folding f init seq)
     (fri (int 1) null))
+
+(fri (greater (int 1) (int 1)) null)
