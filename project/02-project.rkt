@@ -95,10 +95,8 @@
             (let ([condition_input (fri (if-then-else-condition expression) environment)])
             (cond 
                 [(triggered? condition_input) condition_input]
-                [(true? condition_input) (fri (if-then-else-e1 expression) environment)]
                 [(false? condition_input) (fri (if-then-else-e2 expression) environment)]
-                [(int? condition_input) (fri (if-then-else-e1 expression) environment)]
-                [#t (triggered (exception "if-then-else: wrong argument type"))])
+                [#t (fri (if-then-else-e1 expression) environment)])
         )]
         [(?int? expression) 
             (let ([expression_input (fri (?int-e expression) environment)])
@@ -298,27 +296,27 @@
         [(vars? expression) 
             (let (
                 [names (vars-s expression)]
-                [values (vars-e1 expression)]
+                [vals (vars-e1 expression)]
                 [expression_input (vars-e2 expression)])
             (cond
-                [(and (list? names) (list? values)) 
-                    (let ([fried_values (map (λ (v) (fri v environment)) values)])
+                [(and (list? names) (list? vals)) 
+                    (let ([fried_values (map (λ (value) (fri value environment)) vals)])
                     (if (triggered? fried_values) 
                         fried_values
                         (fri expression_input (append (map (λ (n v) (cons n v)) names fried_values) environment))))]
-                [#t (if (equal? #f (assoc names environment))
-                        (let ([evaluated_value (fri values environment)]) 
+                [(string? names) 
+                    (let ([evaluated_value (fri vals environment)]) 
                         (if (triggered? evaluated_value)
                             evaluated_value
-                            (fri expression_input (append (list (cons names evaluated_value))))))
-                    (triggered (exception "vars: duplicate identifier")))])
+                            (fri expression_input (append (list (cons names evaluated_value)) environment))))]
+                [#t (triggered (exception "vars: wrong argument type"))])
         )]
         [(valof? expression) 
             (letrec (
                 [name (valof-s expression)]
                 [found (assoc name environment)])
             (cond
-                [(not (equal? #f found)) (cdr found)]
+                [found (cdr found)]
                 [#t (triggered (exception "valof: undefined variable"))])
         )]
 
@@ -336,7 +334,9 @@
                     (let (
                         [name (proc-name e)]
                         [body (proc-body e)])
-                    (fri body (append (list (cons name null)) environment))
+                    (if (null? fried_args)
+                        (fri body (append (list (cons name null)) environment))
+                        (triggered (exception "call: arity mismatch")))
                 )]
                 [(closure? e) 
                     (letrec (
@@ -363,21 +363,29 @@
         [ee2 (fri e2 null)])
     (if (equal? ee1 ee2)
         (false)
-        (?leq ee2 ee1))))
+        (?leq ee2 ee1))
+))
 
 (define (rev e)
-    (fri (int 1) null))
+    (call 
+        (fun "reverse" (list "e" "acc")
+            (vars 
+                (list "head" "tail")
+                (list (head (valof "e")) (tail (valof "e")))
+                (if-then-else (?empty (valof "tail"))
+                    (.. (valof "head") (valof "acc"))
+                    (call (valof "reverse") (list (valof "tail") (.. (valof "head") (valof "acc")))))))
+        (list e (empty)))
+)
 
 (define (binary e)
-    (fri (int 1) null))
+    (triggered (exception "binary: not implemented")))
 
 (define (mapping f seq)
-    (fri (int 1) null))
+    (triggered (exception "mapping: not implemented")))
 
 (define (filtering f seq)
-    (fri (int 1) null))
+    (triggered (exception "filtering: not implemented")))
 
 (define (folding f init seq)
-    (fri (int 1) null))
-
-(fri (greater (int 1) (int 1)) null)
+    (triggered (exception "folding: not implemented")))
