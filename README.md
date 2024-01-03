@@ -2,4 +2,4 @@
 Learning Racket for a Functional Programming class, includes:
 
 - Some exercises to learn the language
-- A functioning interpreter for a new language
+- A functional interpreter writen in Racket for a new language called "Fri"
