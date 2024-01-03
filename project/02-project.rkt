@@ -358,12 +358,12 @@
 
 ; Macros
 (define (greater e1 e2)
-    (let (
-        [ee1 (fri e1 null)]
-        [ee2 (fri e2 null)])
-    (if (equal? ee1 ee2)
+    (vars 
+        (list "ee1" "ee2")
+        (list (fri e1 null) (fri e2 null))
+    (if-then-else (?= (valof "ee1") (valof "ee2"))
         (false)
-        (?leq ee2 ee1))
+        (?leq (valof "ee2") (valof "ee1")))
 ))
 
 (define (rev e)
@@ -378,14 +378,51 @@
         (list e (empty)))
 )
 
-(define (binary e)
-    (triggered (exception "binary: not implemented")))
+(define (binary e1)
+    (triggered (exception "binary: not implemented"))
+)
 
 (define (mapping f seq)
-    (triggered (exception "mapping: not implemented")))
+    (call 
+        (fun "map_inner" (list "f" "seq")
+            (vars 
+                (list "head" "tail")
+                (list (head (valof "seq")) (tail (valof "seq")))
+                (if-then-else (?empty (valof "tail"))
+                    (call (valof "f") (list (valof "head")))
+                    (.. (call (valof "f") (list (valof "head"))) (call (valof "map_inner") (list (valof "f") (valof "tail")))))))
+        (list f seq))
+)
 
 (define (filtering f seq)
-    (triggered (exception "filtering: not implemented")))
+    (call 
+        (fun "filter_inner" (list "f" "seq")
+            (vars 
+                (list "head" "tail")
+                (list (head (valof "seq")) (tail (valof "seq")))
+                (if-then-else (?empty (valof "tail"))
+                    (if-then-else (call (valof "f") (list (valof "head")))
+                        (.. (valof "head") (empty))
+                        (empty)
+                    (if-then-else (call (valof "f") (list (valof "head"))))
+                        (.. (valof "head") (call (valof "filter_inner") (list (valof "f") (valof "tail"))))
+                        (call (valof "filter_inner") (list (valof "f") (valof "tail")))))))
+        (list f seq))
+)
 
 (define (folding f init seq)
-    (triggered (exception "folding: not implemented")))
+        (call 
+        (fun "fold_inner" (list "f" "init" "seq")
+            (vars 
+                (list "head" "tail")
+                (list (head (valof "seq")) (tail (valof "seq")))
+                (if-then-else (?empty (valof "tail"))
+                    (call (valof "f") (list (valof "init")))
+                    (call (valof "f") (list (call (valof "fold_inner") (list (valof "f") (valof "tail"))))))))
+        (list f init seq))
+)
+
+
+;(fri (rev (.. (int 0) (.. (int 1) (.. (int 2) (.. (int 3) (empty)))))) null)
+
+;(fri (mapping (fun "" null (valof "x")) (.. (int 0) (.. (int 1) (.. (int 2) (.. (int 3) (empty)))))) null)
