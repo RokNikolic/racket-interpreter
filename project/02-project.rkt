@@ -335,7 +335,7 @@
                         [name (proc-name e)]
                         [body (proc-body e)])
                     (if (null? fried_args)
-                        (fri body (append (list (cons name null)) environment))
+                        (fri body (append (list (cons name e)) environment))
                         (triggered (exception "call: arity mismatch")))
                 )]
                 [(closure? e) 
@@ -411,18 +411,5 @@
 )
 
 (define (folding f init seq)
-        (call 
-        (fun "fold_inner" (list "f" "init" "seq")
-            (vars 
-                (list "head" "tail")
-                (list (head (valof "seq")) (tail (valof "seq")))
-                (if-then-else (?empty (valof "tail"))
-                    (call (valof "f") (list (valof "init")))
-                    (call (valof "f") (list (call (valof "fold_inner") (list (valof "f") (valof "tail"))))))))
-        (list f init seq))
+    (triggered (exception "folding: not implemented"))
 )
-
-
-;(fri (rev (.. (int 0) (.. (int 1) (.. (int 2) (.. (int 3) (empty)))))) null)
-
-;(fri (mapping (fun "" null (valof "x")) (.. (int 0) (.. (int 1) (.. (int 2) (.. (int 3) (empty)))))) null)
