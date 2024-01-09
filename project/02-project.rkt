@@ -358,58 +358,44 @@
 
 ; Macros
 (define (greater e1 e2)
-    (vars 
-        (list "ee1" "ee2")
-        (list (fri e1 null) (fri e2 null))
-    (if-then-else (?= (valof "ee1") (valof "ee2"))
+    (if-then-else (?= e1 e2)
         (false)
-        (?leq (valof "ee2") (valof "ee1")))
+        (?leq e2 e1)
 ))
 
 (define (rev e)
     (call 
-        (fun "reverse" (list "e" "acc")
-            (vars 
-                (list "head" "tail")
-                (list (head (valof "e")) (tail (valof "e")))
-                (if-then-else (?empty (valof "tail"))
-                    (.. (valof "head") (valof "acc"))
-                    (call (valof "reverse") (list (valof "tail") (.. (valof "head") (valof "acc")))))))
-        (list e (empty)))
+        (fun "reverse" (list "e")
+            (if-then-else (?empty (valof "e"))
+                (empty)
+                (.. (call (valof "reverse") (list (tail (valof "e")))) (head (valof "e")))))
+        (list e))
 )
 
 (define (binary e1)
-    (triggered (exception "binary: not implemented"))
+    "binary not implemented"
 )
 
 (define (mapping f seq)
     (call 
-        (fun "map_inner" (list "f" "seq")
-            (vars 
-                (list "head" "tail")
-                (list (head (valof "seq")) (tail (valof "seq")))
-                (if-then-else (?empty (valof "tail"))
-                    (call (valof "f") (list (valof "head")))
-                    (.. (call (valof "f") (list (valof "head"))) (call (valof "map_inner") (list (valof "f") (valof "tail")))))))
+        (fun "map" (list "f" "seq")
+            (if-then-else (?empty (valof "seq"))
+                (empty)
+                (.. (call (valof "f") (list (head (valof "seq")))) (call (valof "map") (list (valof "f") (tail (valof "seq")))))))
         (list f seq))
 )
 
 (define (filtering f seq)
     (call 
-        (fun "filter_inner" (list "f" "seq")
-            (vars 
-                (list "head" "tail")
-                (list (head (valof "seq")) (tail (valof "seq")))
-                (if-then-else (?empty (valof "tail"))
-                    (if-then-else (call (valof "f") (list (valof "head")))
-                        (.. (valof "head") (empty))
-                        (empty)
-                    (if-then-else (call (valof "f") (list (valof "head"))))
-                        (.. (valof "head") (call (valof "filter_inner") (list (valof "f") (valof "tail"))))
-                        (call (valof "filter_inner") (list (valof "f") (valof "tail")))))))
+        (fun "filter" (list "f" "seq")
+            (if-then-else (?empty (valof "seq"))
+                (empty)
+                (if-then-else (call (valof "f") (list (head (valof "seq")))))
+                        (.. (head (valof "seq")) (call (valof "filter") (list (valof "f") (tail (valof "seq")))))
+                        (.. (empty) (call (valof "filter") (list (valof "f") (tail (valof "seq")))))))
         (list f seq))
 )
 
 (define (folding f init seq)
-    (triggered (exception "folding: not implemented"))
+    "folding not implemented"
 )
