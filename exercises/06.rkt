@@ -42,7 +42,7 @@
     (cond 
         [(null? list_in) null]
         [(f (car list_in)) (append (list (car list_in)) (filter f (cdr list_in)))]
-        [#t (append null (filter f (cdr list_in)))]))
+        [#t (filter f (cdr list_in))]))
 
 (define (zip list1 list2)
     (cond 

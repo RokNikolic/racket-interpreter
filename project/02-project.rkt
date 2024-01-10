@@ -365,11 +365,14 @@
 
 (define (rev e)
     (call 
-        (fun "reverse" (list "e")
-            (if-then-else (?empty (valof "e"))
-                (empty)
-                (.. (call (valof "reverse") (list (tail (valof "e")))) (head (valof "e")))))
-        (list e))
+        (fun "reverse" (list "e" "acc")
+            (vars 
+                (list "head" "tail")
+                (list (head (valof "e")) (tail (valof "e")))
+                (if-then-else (?empty (valof "tail"))
+                    (.. (valof "head") (valof "acc"))
+                    (call (valof "reverse") (list (valof "tail") (.. (valof "head") (valof "acc")))))))
+        (list e (empty)))
 )
 
 (define (binary e1)
@@ -395,6 +398,7 @@
 ;                     (call (valof "filter") (list (valof "f") (tail (valof "seq")) (valof "acc"))))))
 ;         (list f (rev seq) (empty)))
 ; )
+
 
 (define (filtering f seq)
     (call 
