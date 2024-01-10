@@ -382,20 +382,36 @@
             (if-then-else (?empty (valof "seq"))
                 (empty)
                 (.. (call (valof "f") (list (head (valof "seq")))) (call (valof "map") (list (valof "f") (tail (valof "seq")))))))
-        (list f seq))
+         (list f seq))
 )
+
+; (define (filtering f seq)
+;     (call 
+;         (fun "filter" (list "f" "seq" "acc")
+;             (if-then-else (?empty (valof "seq"))
+;                 (valof "acc")
+;                 (if-then-else (call (valof "f") (list (head (valof "seq"))))
+;                     (call (valof "filter") (list (valof "f") (tail (valof "seq")) (.. (head (valof "seq")) (valof "acc"))))
+;                     (call (valof "filter") (list (valof "f") (tail (valof "seq")) (valof "acc"))))))
+;         (list f (rev seq) (empty)))
+; )
 
 (define (filtering f seq)
     (call 
         (fun "filter" (list "f" "seq")
             (if-then-else (?empty (valof "seq"))
                 (empty)
-                (if-then-else (call (valof "f") (list (head (valof "seq")))))
+                (if-then-else (call (valof "f") (list (head (valof "seq"))))
                         (.. (head (valof "seq")) (call (valof "filter") (list (valof "f") (tail (valof "seq")))))
-                        (.. (empty) (call (valof "filter") (list (valof "f") (tail (valof "seq")))))))
+                        (call (valof "filter") (list (valof "f") (tail (valof "seq")))))))
         (list f seq))
 )
 
 (define (folding f init seq)
-    "folding not implemented"
+    (call 
+        (fun "fold" (list "f" "init" "seq")
+            (if-then-else (?empty (valof "seq"))
+                (valof "init")
+                (call (valof "f") (list (call (valof "fold") (list (valof "f") (valof "init") (tail (valof "seq")))) (head (valof "seq"))))))
+        (list f init (rev seq)))
 )
