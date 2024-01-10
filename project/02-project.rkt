@@ -6,7 +6,7 @@
          ?int ?bool ?.. ?seq ?empty ?exception
          add mul ?leq ?= head tail ~ ?all ?any
          vars valof fun proc closure call
-         greater rev binary filtering folding mapping
+         greater rev filtering folding mapping
          fri)
 
 ; Data types
@@ -48,6 +48,7 @@
 (struct closure (env f) #:transparent)
 (struct call (e args) #:transparent)
 
+; Interpreter
 (define (fri expression environment)
     (cond
         ; Data types
@@ -375,10 +376,6 @@
         (list e (empty)))
 )
 
-(define (binary e1)
-    "binary not implemented"
-)
-
 (define (mapping f seq)
     (call 
         (fun "map" (list "f" "seq")
@@ -387,18 +384,6 @@
                 (.. (call (valof "f") (list (head (valof "seq")))) (call (valof "map") (list (valof "f") (tail (valof "seq")))))))
          (list f seq))
 )
-
-; (define (filtering f seq)
-;     (call 
-;         (fun "filter" (list "f" "seq" "acc")
-;             (if-then-else (?empty (valof "seq"))
-;                 (valof "acc")
-;                 (if-then-else (call (valof "f") (list (head (valof "seq"))))
-;                     (call (valof "filter") (list (valof "f") (tail (valof "seq")) (.. (head (valof "seq")) (valof "acc"))))
-;                     (call (valof "filter") (list (valof "f") (tail (valof "seq")) (valof "acc"))))))
-;         (list f (rev seq) (empty)))
-; )
-
 
 (define (filtering f seq)
     (call 
