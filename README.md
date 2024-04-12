@@ -1,4 +1,4 @@
-# Racket-Interpreter
+# Racket interpreter
 Learning Racket, includes:
 
 - Some exercises to learn the language
